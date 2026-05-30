@@ -1,31 +1,31 @@
-import discord
-from prediction import Prediction
-from asyncio import sleep
+from discord import Intents as DiscordIntents
+from discord.ext import commands
 
-intents = discord.Intents().default()
-intents.message_content = True
+INTENTS = DiscordIntents().default()
+INTENTS.message_content = True
 
-roles = {'1373073557805863003': 89, '1373073595504529601': 95, '1373073617809702943': 99}
+initial_extensions = [
+    'cogs.predictor',
+    'cogs.admin'
+]
 
-class Bot(discord.Client):
-  async def predictor(self, channel, role):
-      pred = Prediction(role, 3)
-      msg = await channel.send('```\nLoading\n``` ')
+class PredictorBot(commands.Bot):
+    def __init__(self) -> None:
+        super().__init__(command_prefix='$', intents=INTENTS)
 
-      for i  in range (5):
-        await sleep(0.5)
-        await msg.edit(content=f'```\n{'Loading' + '.'*i}\n``` ')
+        self.token = ''
 
-      await msg.edit(content='', embed=pred.embed())
+    async def setup_hook(self):
+        for extension in initial_extensions:
+            try:
+                await self.load_extension(extension)
+                print(f'Loaded {extension}')
 
-  async def on_message(self, msg : discord.Message):
-      if msg.author.bot: return
-      if not msg.content == 'svp60' and not msg.channel.name == 'tickets': return
+            except Exception as e:
+                print(f'Exception caught; unable to load extension {e}/{type(e)}')
 
-      role = next(roles[str(r.id)] for r in msg.author.roles if str(r.id) in roles)
-
-      await self.predictor(msg.channel, role)
+    def run(self, reconnect=True):
+        super().run(self.token, reconnect=reconnect)
 
 if __name__ == '__main__':
-  bot = Bot(intents=intents)
-  bot.run('MTM3MzAzOTY4Nzg5MTE1NzEzMw.G363hU.eHogvntKObBJ0eDc8usl9G4YlQvBtdG7U6uG90')
+    PredictorBot().run()
